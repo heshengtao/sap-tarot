@@ -7,6 +7,8 @@
 <link rel="stylesheet" href="../../fontawesome/css/all.min.css">
 <link rel="stylesheet" href="github-markdown-dark.css"/>
 <script src="marked.min.js"></script>
+<script src="lang/zh.js"></script>
+<script src="lang/en.js"></script>
 <style>
 :root {
   --bg-primary: #0f1419;
@@ -645,9 +647,70 @@ body {
   transform: translate(-50%, -50%);
   z-index: 0;
 }
+
+/* 语言切换按钮样式 */
+.language-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  gap: 5px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 25px;
+  padding: 8px;
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-soft);
+}
+
+.lang-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 40px;
+}
+
+.lang-btn:hover {
+  color: var(--text-primary);
+  background: rgba(59, 90, 128, 0.1);
+}
+
+.lang-btn.active {
+  background: var(--accent-color);
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 90, 128, 0.3);
+}
+
+/* 响应式语言切换按钮 */
+@media (max-width: 768px) {
+  .language-toggle {
+    top: 15px;
+    right: 15px;
+    padding: 6px;
+  }
+  
+  .lang-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    min-width: 35px;
+  }
+}
 </style>
 </head>
 <body>
+
+<!-- 语言切换按钮 -->
+<div class="language-toggle">
+  <button class="lang-btn active" id="langZh" data-lang="zh">中文</button>
+  <button class="lang-btn" id="langEn" data-lang="en">EN</button>
+</div>
 
 <div class="container">
   <div class="header">
@@ -756,6 +819,10 @@ let isGenerating = false;
 let systemPromptSet = false;
 let wsConnected = false;
 
+// 国际化相关变量
+let currentLang = 'zh'; // 默认中文
+let langData = {}; // 当前语言数据
+
 // 使用LocalStorage实现持久化缓存
 const interpretationCacheKey = 'tarotInterpretationCache';
 
@@ -842,8 +909,8 @@ function interpretCard(index) {
   
   // 显示牌面信息
   document.getElementById('cardName').textContent = card.name;
-  document.getElementById('cardPosition').textContent = positions[position];
-  document.getElementById('cardOrientation').textContent = card.reversed ? '逆位' : '正位';
+  document.getElementById('cardPosition').textContent = getPositions()[position];
+  document.getElementById('cardOrientation').textContent = card.reversed ? (langData.reversed || '逆位') : (langData.upright || '正位');
   
   const cardImage = document.getElementById('cardImage');
   cardImage.src = imagePath;
@@ -995,19 +1062,145 @@ function clearInterpretationCache() {
 // 解析内容构建器
 let interpretationBuilder = '';
 
-// 凯尔特十字各位置含义
-const positions = {
-  1: "现状 - 你当前的状况",
-  2: "挑战 - 你面临的挑战或阻碍", 
-  3: "远因 - 过去的影响",
-  4: "近因 - 近期的影响",
-  5: "可能性 - 可能的发展",
-  6: "近期 - 近期的发展",
-  7: "你的方法 - 你应该采取的方法",
-  8: "外在影响 - 外在环境的影响",
-  9: "希望恐惧 - 你内心的希望与恐惧",
-  10: "最终结果 - 最终的结果"
-};
+// 国际化函数
+function initLanguage() {
+  // 从localStorage获取保存的语言设置，默认为中文
+  const savedLang = localStorage.getItem('tarot_language') || 'zh';
+  switchLanguage(savedLang);
+}
+
+function switchLanguage(lang) {
+  currentLang = lang;
+  
+  // 获取语言数据
+  if (lang === 'zh') {
+    langData = window.zh || {};
+  } else if (lang === 'en') {
+    langData = window.en || {};
+  }
+  
+  // 保存语言设置到localStorage
+  localStorage.setItem('tarot_language', lang);
+  
+  // 更新界面
+  updateUI();
+  
+  // 更新语言按钮状态
+  updateLanguageButtons();
+  
+  // 更新HTML lang属性
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  
+  console.log('切换到语言:', lang);
+}
+
+function updateUI() {
+  if (!langData) return;
+  
+  // 更新页面标题
+  document.title = langData.pageTitle || 'AI 塔罗牌占卜';
+  
+  // 更新头部
+  const headerTitle = document.querySelector('.header h1');
+  if (headerTitle) {
+    headerTitle.innerHTML = `<i class="fas fa-crystal-ball"></i> ${langData.mainTitle || 'AI 塔罗牌占卜'}`;
+  }
+  
+  const headerSubtitle = document.querySelector('.header p');
+  if (headerSubtitle) {
+    headerSubtitle.textContent = langData.subtitle || '让神秘的塔罗为你指引前路，探索内心的智慧';
+  }
+  
+  // 更新问题输入区域
+  const questionTitle = document.querySelector('.question-section h2');
+  if (questionTitle) {
+    questionTitle.innerHTML = `<i class="fas fa-question-circle"></i> ${langData.questionTitle || '请输入你想要占卜的问题'}`;
+  }
+  
+  const questionInput = document.getElementById('questionInput');
+  if (questionInput) {
+    questionInput.placeholder = langData.questionPlaceholder || '例如：我的感情会如何发展？我该如何做出这个重要决定？我的事业前景如何？';
+  }
+  
+  const startBtn = document.getElementById('startBtn');
+  if (startBtn) {
+    startBtn.innerHTML = `<i class="fas fa-magic"></i> ${langData.startButton || '开始占卜'}`;
+  }
+  
+  // 更新牌阵区域
+  const spreadTitle = document.querySelector('.spread-title');
+  if (spreadTitle) {
+    spreadTitle.innerHTML = `<i class="fas fa-plus"></i> ${langData.spreadTitle || '凯尔特十字牌阵'}
+      <div style="font-size: 1rem; font-weight: 400; margin-top: 10px; color: var(--text-secondary);">
+        ${langData.spreadSubtitle || '点击任意卡牌查看详细解析'}
+      </div>`;
+  }
+  
+  const resetBtn = document.getElementById('resetBtn');
+  if (resetBtn) {
+    resetBtn.innerHTML = `<i class="fas fa-redo"></i> ${langData.resetButton || '重新占卜'}`;
+  }
+  
+  // 更新解释区域
+  const interpretationTitle = document.querySelector('.interpretation h3');
+  if (interpretationTitle) {
+    interpretationTitle.innerHTML = `<i class="fas fa-eye"></i> ${langData.interpretationTitle || '牌面解析'}`;
+  }
+  
+  // 更新卡牌含义
+  updateCardMeanings();
+  
+  // 如果当前显示加载消息，也需要更新
+  const loadingSpan = document.querySelector('.loading span');
+  if (loadingSpan) {
+    loadingSpan.textContent = langData.loadingMessage || 'AI正在为你解读牌面...';
+  }
+}
+
+function updateCardMeanings() {
+  if (!langData.cardMeanings) return;
+  
+  // 更新卡牌含义显示
+  const cards = document.querySelectorAll('.tarot-card');
+  cards.forEach((card, index) => {
+    const position = index + 1;
+    const meaningElement = card.querySelector('.card-meaning');
+    if (meaningElement) {
+      const originalMeaning = card.dataset.meaning;
+      const translatedMeaning = langData.cardMeanings[originalMeaning] || originalMeaning;
+      meaningElement.textContent = translatedMeaning;
+    }
+  });
+}
+
+function updateLanguageButtons() {
+  // 移除所有按钮的active类
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // 为当前语言按钮添加active类
+  const currentBtn = document.querySelector(`[data-lang="${currentLang}"]`);
+  if (currentBtn) {
+    currentBtn.classList.add('active');
+  }
+}
+
+// 凯尔特十字各位置含义 - 使用函数返回以支持动态语言切换
+function getPositions() {
+  return langData.positions || {
+    1: "现状 - 你当前的状况",
+    2: "挑战 - 你面临的挑战或阻碍", 
+    3: "远因 - 过去的影响",
+    4: "近因 - 近期的影响",
+    5: "可能性 - 可能的发展",
+    6: "近期 - 近期的发展",
+    7: "你的方法 - 你应该采取的方法",
+    8: "外在影响 - 外在环境的影响",
+    9: "希望恐惧 - 你内心的希望与恐惧",
+    10: "最终结果 - 最终的结果"
+  };
+}
 
 // 在页面加载时检查缓存状态
 function checkCacheStatus() {
@@ -1261,7 +1454,7 @@ function requestInterpretation(card, position, cacheKey) {
 
 牌面信息：
 - 牌名：${card.name}
-- 位置：${positions[position]}
+- 位置：${getPositions()[position]}
 - 方位：${card.reversed ? '逆位' : '正位'}
 - 正位含义：${card.meanings.upright.join(', ')}
 - 逆位含义：${card.meanings.reversed.join(', ')}
@@ -1364,6 +1557,9 @@ function resetReading() {
 document.addEventListener('DOMContentLoaded', () => {
   console.log('页面加载完成');
   
+  // 初始化语言系统
+  initLanguage();
+  
   // 检查缓存状态
   checkCacheStatus();
   
@@ -1372,6 +1568,15 @@ document.addEventListener('DOMContentLoaded', () => {
   
   document.getElementById('startBtn').addEventListener('click', startReading);
   document.getElementById('resetBtn').addEventListener('click', resetReading);
+  
+  // 语言切换按钮事件监听
+  document.getElementById('langZh').addEventListener('click', () => {
+    switchLanguage('zh');
+  });
+  
+  document.getElementById('langEn').addEventListener('click', () => {
+    switchLanguage('en');
+  });
   
   // 回车键开始占卜
   document.getElementById('questionInput').addEventListener('keypress', (e) => {
