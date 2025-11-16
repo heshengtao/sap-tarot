@@ -1450,7 +1450,7 @@ function requestInterpretation(card, position, cacheKey) {
   toggleCardClickability(false);
   
   // 构造用户输入，包含所有牌面信息
-  const userInput = `请为我解读这张牌：
+  let userInput = `请为我解读这张牌：
 
 牌面信息：
 - 牌名：${card.name}
@@ -1464,6 +1464,23 @@ function requestInterpretation(card, position, cacheKey) {
 用户问题：${currentQuestion}
 
 请给出专业的塔罗牌解读。`;
+
+  if (currentLang === 'en') {
+    userInput = `Please interpret this card for me:
+
+Card information:
+- Name: ${card.name}
+- Position: ${getPositions()[position]}
+- Orientation: ${card.reversed ? 'Reversed' : 'Upright'}
+- Upright meaning: ${card.meanings.upright.join(', ')}
+- Reversed meaning: ${card.meanings.reversed.join(', ')}
+- Element: ${card.element || 'No specific element'}
+- Constellation: ${card.sign && card.sign.length > 0 ? card.sign.join(', ') : 'No specific constellation'}
+
+User question: ${currentQuestion}
+
+Please provide a professional tarot card interpretation in English.`;
+  }
 
   // 记录当前请求的缓存键，用于在收到响应时保存
   currentRequestCacheKey = cacheKey;
