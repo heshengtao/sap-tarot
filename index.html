@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI 塔罗牌占卜</title>
+<link rel="stylesheet" href="../../fontawesome/css/all.min.css">
+<link rel="stylesheet" href="github-markdown-dark.css"/>
+<script src="marked.min.js"></script>
+<style>
+:root {
+  --bg-primary: #0f1419;
+  --bg-secondary: #1a2332;
+  --bg-card: rgba(26, 35, 50, 0.85);
+  --border-color: rgba(78, 115, 145, 0.4);
+  --border-active: #4e7391;
+  --accent-color: #3d5a80;
+  --accent-light: #5a7fa3;
+  --text-primary: #e8eaed;
+  --text-secondary: #9aa0a6;
+  --gold-color: #fbbf24;
+  --card-back: #2d3748;
+  --gradient-primary: linear-gradient(135deg, #0f1419 0%, #1a2332 50%, #2d3748 100%);
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.25);
+  --shadow-hover: 0 8px 35px rgba(59, 90, 128, 0.15);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  background: var(--gradient-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px; /* 减小底部间距，从50px改为30px */
+  padding: 30px 0;
+}
+
+.header h1 {
+  font-size: 3rem;
+  font-weight: 300;
+  color: var(--gold-color);
+  text-shadow: 0 2px 15px rgba(251, 191, 36, 0.3);
+  margin-bottom: 15px;
+  letter-spacing: 2px;
+}
+
+.header p {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+}
+
+/* 问题输入区域 */
+.question-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 40px;
+  margin-bottom: 50px;
+  text-align: center;
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-soft);
+}
+
+.question-section h2 {
+  color: var(--accent-light);
+  margin-bottom: 25px;
+  font-size: 1.6rem;
+  font-weight: 400;
+}
+
+.question-input {
+  width: 100%;
+  max-width: 700px;
+  padding: 18px 25px;
+  font-size: 1.1rem;
+  background: rgba(15, 20, 25, 0.6);
+  border: 2px solid var(--border-color);
+  border-radius: 15px;
+  color: var(--text-primary);
+  margin-bottom: 25px;
+  transition: all 0.3s ease;
+}
+
+.question-input:focus {
+  outline: none;
+  border-color: var(--accent-light);
+  box-shadow: 0 0 25px rgba(90, 127, 163, 0.2);
+  background: rgba(15, 20, 25, 0.8);
+}
+
+.question-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.start-btn {
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-light));
+  border: none;
+  padding: 15px 35px;
+  border-radius: 30px;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-soft);
+}
+
+.start-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+  background: linear-gradient(135deg, var(--accent-light), #6b92b8);
+}
+
+/* 牌阵区域 */
+.spread-area {
+  display: none;
+  position: relative;
+  margin: 20px 0; /* 减小上下边距，从50px改为20px */
+  min-height: 1000px;
+}
+
+.spread-title {
+  text-align: center;
+  color: var(--gold-color);
+  margin-bottom: 0;  /* 减小下方间距，从50px改为20px */
+  font-size: 1.8rem;
+  font-weight: 300;
+  text-shadow: 0 2px 10px rgba(251, 191, 36, 0.2);
+}
+
+.celtic-cross {
+  position: relative;
+  width: 100%;
+  height: 900px;
+  margin: 0 auto;
+  max-width: 1200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform: translateX(-100px); /* 调整整体左移量，使十字部分更居中 */
+}
+
+.tarot-card {
+  position: absolute;
+  width: 110px;
+  height: 165px;
+  background: linear-gradient(145deg, var(--card-back), #374151);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  text-align: center;
+  color: var(--gold-color);
+  box-shadow: var(--shadow-soft);
+  user-select: none;
+  overflow: hidden;
+}
+
+.tarot-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: var(--gold-color);
+  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.1);
+  z-index: 15;
+}
+
+.tarot-card.flipped {
+  background: white;
+  color: #333;
+  border-color: var(--accent-color);
+  box-shadow: 0 8px 35px rgba(59, 90, 128, 0.2);
+}
+
+.tarot-card img {
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* 特殊处理横向牌面的图片 */
+.card-2.flipped {
+  overflow: hidden; /* 确保内容不超出卡牌边界 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-2.flipped img {
+  max-width: none; /* 取消最大宽度限制 */
+  width: 165%; /* 图片宽度超过容器宽度 */
+  height: auto; /* 让高度自动调整 */
+  border-radius: 10px;
+  transform-origin: center; /* 确保旋转围绕中心点 */
+  transform: rotate(90deg); /* 横向放置 */
+  position: relative; /* 允许使用其他定位属性 */
+}
+
+.card-2.flipped.reversed img {
+  transform: rotate(270deg); /* 逆位时旋转方向 */
+}
+
+.tarot-card.reversed img {
+  transform: rotate(180deg);
+}
+
+.card-number {
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+}
+
+.card-meaning {
+  font-size: 0.8rem;
+  text-align: center;
+  line-height: 1.3;
+  opacity: 0.9;
+  padding: 0 5px;
+}
+
+/* 凯尔特十字布局 - 修复重叠问题 */
+.card-1 { 
+  top: 50%; 
+  left: 45%; /* 将中心卡牌向左移动，从50%改为45% */
+  transform: translate(-50%, -50%); 
+  z-index: 3;
+} /* 现状 - 中心，提高层级让其可见 */
+
+.card-2 { 
+  top: 50%; 
+  left: 45%; /* 与1号牌同一水平位置 */
+  width: 165px; /* 交换宽高以横向放置 */
+  height: 110px;
+  transform: translate(-50%, -50%); /* 不需要旋转，通过交换宽高实现横向 */
+  z-index: 4; /* 提高层级让其可见 */
+} /* 挑战 - 横向放置在1号牌上方 */
+
+.card-3 { 
+  top: calc(50% - 200px); 
+  left: 45%; /* 与1号牌保持一致的左偏移 */
+  transform: translate(-50%, -50%); 
+  z-index: 1;
+} /* 远因 - 上方 */
+
+.card-4 { 
+  top: calc(50% + 200px); 
+  left: 45%; /* 与1号牌保持一致的左偏移 */
+  transform: translate(-50%, -50%); 
+  z-index: 1;
+} /* 近因 - 下方 */
+
+.card-5 { 
+  top: 50%; 
+  left: calc(45% - 200px); /* 调整为新的中心点左侧 */
+  transform: translate(-50%, -50%); 
+  z-index: 1;
+} /* 可能性 - 左方 */
+
+.card-6 { 
+  top: 50%; 
+  left: calc(45% + 200px); /* 调整为新的中心点右侧 */
+  transform: translate(-50%, -50%); 
+  z-index: 1;
+} /* 近期 - 右方，确保与9号牌有足够距离 */
+
+.card-7 { 
+  top: calc(50% + 300px); 
+  left: calc(45% + 320px); /* 调整右侧卡牌水平位置，避免与十字结构重叠 */
+  transform: translate(-50%, -50%); 
+  z-index: 1;
+} /* 你的方法 - 右下角柱 */
+
+.card-8 { 
+  top: calc(50% + 150px); 
+  left: calc(45% + 320px); /* 调整右侧卡牌水平位置 */
+  transform: translate(-50%, -50%); 
+  z-index: 1;
+} /* 外在影响 - 右中下柱 */
+
+.card-9 { 
+  top: calc(50% + 0px); 
+  left: calc(45% + 320px); /* 调整右侧卡牌水平位置，与6号牌保持距离 */
+  transform: translate(-50%, -50%); 
+  z-index: 1;
+} /* 希望恐惧 - 右中柱，与6号牌错开 */
+
+.card-10 { 
+  top: calc(50% - 150px); 
+  left: calc(45% + 320px); /* 调整右侧卡牌水平位置 */
+  transform: translate(-50%, -50%); 
+  z-index: 1;
+} /* 最终结果 - 右上柱 */
+
+/* 解释区域 */
+.interpretation {
+  display: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 35px;
+  margin-top: 40px;
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Markdown 样式 */
+.ai-interpretation {
+  line-height: 1.8;
+  font-size: 1.05rem;
+}
+
+.ai-interpretation h1, 
+.ai-interpretation h2, 
+.ai-interpretation h3 {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  color: var(--gold-color);
+}
+
+.ai-interpretation p {
+  margin-bottom: 1em;
+}
+
+.ai-interpretation ul, 
+.ai-interpretation ol {
+  margin-left: 1.5em;
+  margin-bottom: 1em;
+}
+
+.ai-interpretation blockquote {
+  border-left: 4px solid var(--accent-light);
+  padding-left: 1em;
+  margin-left: 0;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.ai-interpretation code {
+  background: rgba(15, 20, 25, 0.4);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+.ai-interpretation strong, 
+.ai-interpretation b {
+  color: var(--gold-color);
+}
+
+.ai-interpretation a {
+  color: var(--accent-light);
+  text-decoration: underline;
+}
+
+.ai-interpretation img {
+  max-width: 100%;
+  border-radius: 5px;
+  margin: 1em 0;
+}
+
+.interpretation h3 {
+  color: var(--gold-color);
+  margin-bottom: 25px;
+  font-size: 1.5rem;
+  font-weight: 400;
+  text-shadow: 0 2px 10px rgba(251, 191, 36, 0.2);
+}
+
+.card-info {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 25px;
+  gap: 25px;
+}
+
+.card-preview {
+  width: 140px;
+  height: 210px;
+  border-radius: 12px;
+  border: 2px solid var(--border-color);
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-soft);
+}
+
+.card-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-details h4 {
+  color: var(--accent-light);
+  font-size: 1.4rem;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.card-position {
+  color: var(--gold-color);
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+}
+
+.card-orientation {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  background: rgba(59, 90, 128, 0.1);
+  padding: 4px 12px;
+  border-radius: 15px;
+  display: inline-block;
+}
+
+.ai-interpretation {
+  background: rgba(15, 20, 25, 0.4);
+  padding: 25px;
+  border-radius: 15px;
+  border-left: 4px solid var(--accent-light);
+  line-height: 1.8;
+  font-size: 1.05rem;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--accent-light);
+  justify-content: center;
+  padding: 20px;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid transparent;
+  border-top: 3px solid var(--accent-light);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 重新开始按钮 */
+.reset-btn {
+  background: transparent;
+  border: 2px solid var(--accent-color);
+  color: var(--accent-color);
+  padding: 12px 25px;
+  border-radius: 25px;
+  cursor: pointer;
+  margin-top: 30px;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.reset-btn:hover {
+  background: var(--accent-color);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+
+.controls-center {
+  text-align: center;
+  margin-top: 50px;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .celtic-cross {
+    transform: translateX(-100px) scale(0.9);
+    height: 810px;
+  }
+}
+@media (max-width: 1024px) {
+  .celtic-cross {
+    transform: translateX(-90px) scale(0.8);
+    height: 720px;
+  }
+  
+  .tarot-card {
+    width: 100px;
+    height: 150px;
+    font-size: 0.85rem;
+  }
+  
+  .card-2 {
+    width: 150px;
+    height: 100px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 15px;
+  }
+  
+  .header h1 {
+    font-size: 2.2rem;
+  }
+  
+  .celtic-cross {
+    transform: translateX(-70px) scale(0.65);
+    height: 585px;
+  }
+  
+  .card-info {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+  
+  .tarot-card {
+    width: 90px;
+    height: 135px;
+    font-size: 0.8rem;
+  }
+  
+  .card-2 {
+    width: 135px;
+    height: 90px;
+  }
+  
+  .card-meaning {
+    font-size: 0.7rem;
+  }
+  
+  .question-section, .interpretation {
+    padding: 25px;
+  }
+  
+  .card-preview {
+    width: 120px;
+    height: 180px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .celtic-cross {
+    transform: translateX(-50px) scale(0.55);
+    height: 495px;
+  }
+  
+  .tarot-card {
+    width: 80px;
+    height: 120px;
+    font-size: 0.75rem;
+  }
+  
+  .card-2 {
+    width: 120px;
+    height: 80px;
+  }
+  
+  .card-preview {
+    width: 100px;
+    height: 150px;
+  }
+  
+  .spread-area {
+    min-height: 800px;
+  }
+}
+
+/* 添加一些细节动画 */
+.tarot-card {
+  animation: cardAppear 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+.card-1 { animation-delay: 0.1s; }
+.card-2 { animation-delay: 0.2s; }
+.card-3 { animation-delay: 0.3s; }
+.card-4 { animation-delay: 0.4s; }
+.card-5 { animation-delay: 0.5s; }
+.card-6 { animation-delay: 0.6s; }
+.card-7 { animation-delay: 0.7s; }
+.card-8 { animation-delay: 0.8s; }
+.card-9 { animation-delay: 0.9s; }
+.card-10 { animation-delay: 1.0s; }
+
+@keyframes cardAppear {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 添加位置指示线 */
+.celtic-cross::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 45%; /* 调整水平位置指示线与新的卡牌位置对齐 */
+  width: 400px;
+  height: 1px;
+  background: rgba(78, 115, 145, 0.15);
+  transform: translate(-50%, -50%);
+  z-index: 0;
+}
+
+.celtic-cross::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 45%; /* 调整垂直位置指示线与新的卡牌位置对齐 */
+  width: 1px;
+  height: 400px;
+  background: rgba(78, 115, 145, 0.15);
+  transform: translate(-50%, -50%);
+  z-index: 0;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1><i class="fas fa-crystal-ball"></i> AI 塔罗牌占卜</h1>
+    <p>让神秘的塔罗为你指引前路，探索内心的智慧</p>
+  </div>
+
+  <!-- 问题输入区域 -->
+  <div class="question-section" id="questionSection">
+    <h2><i class="fas fa-question-circle"></i> 请输入你想要占卜的问题</h2>
+    <input type="text" class="question-input" id="questionInput" 
+           placeholder="例如：我的感情会如何发展？我该如何做出这个重要决定？我的事业前景如何？" 
+           maxlength="200">
+    <br>
+    <button class="start-btn" id="startBtn">
+      <i class="fas fa-magic"></i> 开始占卜
+    </button>
+  </div>
+
+  <!-- 牌阵区域 -->
+  <div class="spread-area" id="spreadArea">
+    <h2 class="spread-title">
+      <i class="fas fa-plus"></i> 凯尔特十字牌阵
+      <div style="font-size: 1rem; font-weight: 400; margin-top: 10px; color: var(--text-secondary);">
+        点击任意卡牌查看详细解析
+      </div>
+    </h2>
+    <div class="celtic-cross">
+      <div class="tarot-card card-1" data-position="1" data-meaning="现状">
+        <div class="card-number">1</div>
+        <div class="card-meaning">现状</div>
+      </div>
+      <div class="tarot-card card-2" data-position="2" data-meaning="挑战">
+        <div class="card-number">2</div>
+        <div class="card-meaning">挑战</div>
+      </div>
+      <div class="tarot-card card-3" data-position="3" data-meaning="远因">
+        <div class="card-number">3</div>
+        <div class="card-meaning">远因</div>
+      </div>
+      <div class="tarot-card card-4" data-position="4" data-meaning="近因">
+        <div class="card-number">4</div>
+        <div class="card-meaning">近因</div>
+      </div>
+      <div class="tarot-card card-5" data-position="5" data-meaning="可能性">
+        <div class="card-number">5</div>
+        <div class="card-meaning">可能</div>
+      </div>
+      <div class="tarot-card card-6" data-position="6" data-meaning="近期">
+        <div class="card-number">6</div>
+        <div class="card-meaning">近期</div>
+      </div>
+      <div class="tarot-card card-7" data-position="7" data-meaning="你的方法">
+        <div class="card-number">7</div>
+        <div class="card-meaning">方法</div>
+      </div>
+      <div class="tarot-card card-8" data-position="8" data-meaning="外在影响">
+        <div class="card-number">8</div>
+        <div class="card-meaning">外在</div>
+      </div>
+      <div class="tarot-card card-9" data-position="9" data-meaning="希望恐惧">
+        <div class="card-number">9</div>
+        <div class="card-meaning">内心</div>
+      </div>
+      <div class="tarot-card card-10" data-position="10" data-meaning="最终结果">
+        <div class="card-number">10</div>
+        <div class="card-meaning">结果</div>
+      </div>
+    </div>
+    
+    <div class="controls-center">
+      <button class="reset-btn" id="resetBtn">
+        <i class="fas fa-redo"></i> 重新占卜
+      </button>
+    </div>
+  </div>
+
+  <!-- 解释区域 -->
+  <div class="interpretation" id="interpretation">
+    <h3><i class="fas fa-eye"></i> 牌面解析</h3>
+    <div class="card-info">
+      <div class="card-preview" id="cardPreview">
+        <img id="cardImage" src="" alt="">
+      </div>
+      <div class="card-details">
+        <h4 id="cardName"></h4>
+        <div class="card-position" id="cardPosition"></div>
+        <div class="card-orientation" id="cardOrientation"></div>
+      </div>
+    </div>
+    <div class="ai-interpretation" id="aiInterpretation">
+      <div class="loading">
+        <div class="spinner"></div>
+        <span>AI正在为你解读牌面...</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let ws;
+let tarotCards = [];
+let currentQuestion = '';
+let selectedCards = [];
+let isGenerating = false;
+let systemPromptSet = false;
+let wsConnected = false;
+
+// 使用LocalStorage实现持久化缓存
+const interpretationCacheKey = 'tarotInterpretationCache';
+
+// 简化的缓存管理 - 直接使用localStorage，不需要复杂的索引
+function getInterpretationFromCache(cacheKey) {
+  try {
+    const storageKey = `${interpretationCacheKey}_${cacheKey}`;
+    const cachedContent = localStorage.getItem(storageKey);
+    if (cachedContent) {
+      console.log('从缓存获取内容，键:', cacheKey, '长度:', cachedContent.length);
+      return cachedContent;
+    }
+    return null;
+  } catch (e) {
+    console.error('获取缓存出错:', e);
+    return null;
+  }
+}
+
+// 设置缓存
+function setInterpretationCache(cacheKey, interpretation) {
+  try {
+    // 确保内容非空
+    if (!interpretation || interpretation.length < 10) {
+      console.error('尝试缓存空内容或内容太短');
+      return false;
+    }
+    
+    const storageKey = `${interpretationCacheKey}_${cacheKey}`;
+    localStorage.setItem(storageKey, interpretation);
+    
+    console.log(`缓存保存成功 - 键: ${cacheKey}, 长度: ${interpretation.length}`);
+    
+    // 立即验证
+    const verify = localStorage.getItem(storageKey);
+    if (verify && verify.length > 0) {
+      console.log('缓存验证成功');
+      return true;
+    } else {
+      console.error('缓存验证失败');
+      return false;
+    }
+  } catch (e) {
+    console.error('保存缓存出错:', e);
+    return false;
+  }
+}
+
+// 生成稳定的缓存键 - 改进算法确保一致性
+function generateCacheKey(card, position, question) {
+  // 使用卡牌名称、位置、正逆位状态和问题的MD5哈希来生成稳定的键
+  // 为了简化，这里使用一个简单但稳定的字符串组合
+  const questionHash = question.replace(/\s+/g, '').substring(0, 20); // 去除空格，取前20个字符
+  return `${card.name.replace(/\s+/g, '')}_${position}_${card.reversed ? 'R' : 'U'}_${questionHash}`;
+}
+
+// 解释选中的牌函数
+function interpretCard(index) {
+  if (isGenerating) {
+    console.log('AI正在生成解读，请等待');
+    return;
+  }
+  
+  if (!wsConnected) {
+    alert('连接已断开，请刷新页面重试');
+    return;
+  }
+  
+  const card = selectedCards[index];
+  const cardElement = document.querySelectorAll('.tarot-card')[index];
+  const position = parseInt(cardElement.dataset.position);
+  
+  console.log('解释牌面:', card.name, '位置:', position, '逆位:', card.reversed);
+  
+  // 修正图片路径
+  const imagePath = card.image_path.replace('/cards/', 'cards/');
+  
+  // 显示牌面
+  cardElement.classList.add('flipped');
+  cardElement.innerHTML = `<img src="${imagePath}" alt="${card.name}" onerror="this.src='placeholder.jpg'">`;
+  if (card.reversed) {
+    cardElement.classList.add('reversed');
+  }
+  
+  // 显示牌面信息
+  document.getElementById('cardName').textContent = card.name;
+  document.getElementById('cardPosition').textContent = positions[position];
+  document.getElementById('cardOrientation').textContent = card.reversed ? '逆位' : '正位';
+  
+  const cardImage = document.getElementById('cardImage');
+  cardImage.src = imagePath;
+  cardImage.onerror = function() { this.src = 'placeholder.jpg'; };
+  
+  if (card.reversed) {
+    cardImage.style.transform = 'rotate(180deg)';
+  } else {
+    cardImage.style.transform = 'none';
+  }
+  
+  // 显示解释区域
+  document.getElementById('interpretation').style.display = 'block';
+  
+  // 生成缓存键
+  const cacheKey = generateCacheKey(card, position, currentQuestion);
+  console.log('检查缓存键:', cacheKey);
+  
+  // 检查是否存在缓存
+  const cachedContent = getInterpretationFromCache(cacheKey);
+  if (cachedContent) {
+    console.log('找到缓存，直接显示，长度:', cachedContent.length);
+    
+    // 显示缓存加载状态
+    document.getElementById('aiInterpretation').innerHTML = `
+      <div style="color: var(--gold-color); text-align: center; padding: 20px;">
+        <i class="fas fa-history"></i> 读取缓存中...
+      </div>
+    `;
+    
+    // 滚动到解释区域
+    document.getElementById('interpretation').scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'start'
+    });
+    
+    // 显示缓存结果
+    setTimeout(() => {
+      displayInterpretation(cachedContent, false);
+    }, 500);
+    return;
+  }
+  
+  console.log('没有找到缓存，请求AI解析');
+  
+  // 没有缓存，显示加载状态并请求AI解析
+  document.getElementById('aiInterpretation').innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>AI正在为你解读牌面...</span>
+    </div>
+  `;
+  
+  // 滚动到解释区域
+  document.getElementById('interpretation').scrollIntoView({ 
+    behavior: 'smooth',
+    block: 'start'
+  });
+  
+  // 发送解释请求到AI
+  requestInterpretation(card, position, cacheKey);
+}
+
+// 显示AI解释
+function displayInterpretation(interpretation, shouldCache = true) {
+  if (!interpretation || interpretation.length === 0) {
+    console.error('解析内容为空');
+    return;
+  }
+  
+  console.log('显示AI解释，内容长度:', interpretation.length, '是否缓存:', shouldCache);
+  const interpretationElement = document.getElementById('aiInterpretation');
+  
+  // 使用marked.js库解析markdown格式
+  try {
+    interpretationElement.innerHTML = marked.parse(interpretation);
+    console.log('Markdown解析成功');
+  } catch (e) {
+    console.error('解析markdown出错:', e);
+    interpretationElement.textContent = interpretation;
+  }
+  
+  // 自动滚动页面到底部
+  setTimeout(() => {
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: 'smooth'
+    });
+  }, 10);
+  
+  // 如果需要缓存且有缓存键，则保存解释到缓存
+  if (shouldCache && currentRequestCacheKey && interpretation.length > 10) {
+    console.log('准备保存到缓存，键:', currentRequestCacheKey);
+    
+    // 确保内容有效
+    if (interpretation.trim().length > 0) {
+      setInterpretationCache(currentRequestCacheKey, interpretation);
+      
+      // 直接验证localStorage中是否存储成功
+      setTimeout(() => {
+        const directCacheKey = `${interpretationCacheKey}_${currentRequestCacheKey}`;
+        const cachedContent = localStorage.getItem(directCacheKey);
+        if (cachedContent && cachedContent.length > 0) {
+          console.log('直接验证缓存成功，已存储在:', directCacheKey);
+          console.log('缓存内容长度:', cachedContent.length);
+        } else {
+          console.error('直接验证缓存失败，键:', directCacheKey);
+        }
+      }, 200);
+    } else {
+      console.error('内容为空，不进行缓存');
+    }
+    
+    currentRequestCacheKey = null;
+  }
+  
+  isGenerating = false;
+  toggleCardClickability(true);
+}
+
+// 这段重复的WebSocket消息处理将被删除，因为已经在initWS函数中定义了相同功能
+
+
+// 这个函数已在上方定义，删除此重复定义
+
+// 清空缓存
+function clearInterpretationCache() {
+  try {
+    // 先获取所有缓存键
+    const cachedIndex = localStorage.getItem(interpretationCacheKey);
+    if (cachedIndex) {
+      const index = JSON.parse(cachedIndex);
+      
+      // 删除所有单独存储的缓存项
+      for (const key in index) {
+        const storageKey = `${interpretationCacheKey}_${key}`;
+        localStorage.removeItem(storageKey);
+      }
+    }
+    
+    // 删除缓存索引
+    localStorage.removeItem(interpretationCacheKey);
+    console.log('解析结果缓存已清空');
+  } catch (e) {
+    console.error('清空缓存出错:', e);
+  }
+}
+
+// 解析内容构建器
+let interpretationBuilder = '';
+
+// 凯尔特十字各位置含义
+const positions = {
+  1: "现状 - 你当前的状况",
+  2: "挑战 - 你面临的挑战或阻碍", 
+  3: "远因 - 过去的影响",
+  4: "近因 - 近期的影响",
+  5: "可能性 - 可能的发展",
+  6: "近期 - 近期的发展",
+  7: "你的方法 - 你应该采取的方法",
+  8: "外在影响 - 外在环境的影响",
+  9: "希望恐惧 - 你内心的希望与恐惧",
+  10: "最终结果 - 最终的结果"
+};
+
+// 在页面加载时检查缓存状态
+function checkCacheStatus() {
+  try {
+    // 统计现有缓存数量
+    let cacheCount = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(interpretationCacheKey + '_')) {
+        cacheCount++;
+      }
+    }
+    console.log(`初始缓存状态: 发现 ${cacheCount} 个缓存项`);
+  } catch (e) {
+    console.error('检查缓存状态出错:', e);
+  }
+}
+
+// 初始化WebSocket连接
+function initWS() {
+  console.log('正在初始化WebSocket连接...');
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}/ws`);
+  
+  ws.onopen = () => {
+    console.log('WebSocket连接已建立');
+    wsConnected = true;
+    loadTarotCards();
+  };
+  
+  ws.onerror = (error) => {
+    console.error('WebSocket错误:', error);
+    wsConnected = false;
+  };
+  
+  ws.onclose = (event) => {
+    console.log('WebSocket连接已断开:', event);
+    wsConnected = false;
+    // 3秒后重新连接
+    setTimeout(initWS, 3000);
+  };
+  
+  ws.onmessage = (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      console.log('收到WebSocket消息:', data.type);
+      
+      if (data.type === 'messages_update' || data.type === 'broadcast_messages') {
+        const messages = data.data.messages;
+        if (messages && messages.length > 0) {
+          const lastMessage = messages[messages.length - 1];
+          if (lastMessage.role === 'assistant') {
+            // 存储完整的解释内容
+            const fullContent = lastMessage.content;
+            console.log('收到AI解释内容，完整长度:', fullContent.length);
+            
+            // 构建完整解析内容
+            interpretationBuilder = fullContent;
+            
+            // 检查是否是最终完整解释（根据消息类型判断）
+            // broadcast_messages 表示完成的响应，可以缓存
+            const isCompleteResponse = data.type === 'broadcast_messages';
+            
+            // 显示解释内容，只有在完整响应时才缓存
+            if (fullContent && fullContent.length > 10) {
+              displayInterpretation(fullContent, isCompleteResponse);
+              
+              // 自动滚动到页面底部，确保显示最新内容
+              window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth'
+              });
+              
+              // 在完整响应时输出调试信息
+              if (isCompleteResponse && currentRequestCacheKey) {
+                console.log('收到完整响应，将缓存结果，键:', currentRequestCacheKey);
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('解析WebSocket消息出错:', error);
+    }
+  };
+}
+
+// 安全的WebSocket发送
+function safeSend(data) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(data));
+    console.log('发送WebSocket消息:', data);
+    return true;
+  } else {
+    console.warn('WebSocket未连接，无法发送消息:', data);
+    return false;
+  }
+}
+
+// 加载塔罗牌数据
+async function loadTarotCards() {
+  try {
+    const response = await fetch('cards.json');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    tarotCards = await response.json();
+    console.log('塔罗牌数据加载完成，共', tarotCards.length, '张牌');
+  } catch (error) {
+    console.error('加载塔罗牌数据失败:', error);
+    // 可以在这里添加用户友好的错误提示
+  }
+}
+
+// 设置系统提示词（只设置一次）
+function setSystemPrompt() {
+  if (systemPromptSet || !wsConnected) {
+    console.log('系统提示词已设置或WebSocket未连接');
+    return;
+  }
+  
+  const systemPrompt = `你是一位专业的塔罗牌占卜师，具有深厚的塔罗知识和直觉洞察力。请为用户提供准确、有深度且有启发性的塔罗牌解读。
+
+请遵循以下要求：
+1. 结合牌的含义、位置含义和正逆位来解读
+2. 联系用户的具体问题给出针对性建议
+3. 语言要神秘而富有诗意，但又要实用
+4. 解读长度在150-300字之间
+5. 先简述牌的基础含义，再结合位置和问题深入分析，最后给出建议
+
+用户会发送给你牌面信息，包括牌名、牌在凯尔特十字牌阵的位置、正逆位、含义、元素等信息，以及用户的问题。请根据这些信息给出专业的塔罗牌解读。`;
+
+  if (safeSend({
+    type: 'set_system_prompt',
+    data: { text: systemPrompt }
+  })) {
+    systemPromptSet = true;
+    console.log('系统提示词设置成功');
+  }
+}
+
+// 开始占卜
+function startReading() {
+
+  // 首先触发清空消息
+  if (wsConnected) {
+    safeSend({
+      type: 'trigger_clear_message'
+    });
+    console.log('已发送清空非系统消息外的消息指令');
+  }
+
+  const question = document.getElementById('questionInput').value.trim();
+  if (!question) {
+    alert('请输入你想要占卜的问题');
+    return;
+  }
+  
+  if (!wsConnected) {
+    alert('连接未就绪，请稍后再试');
+    return;
+  }
+  
+  if (!tarotCards || tarotCards.length === 0) {
+    alert('塔罗牌数据未加载完成，请稍后再试');
+    return;
+  }
+  
+  currentQuestion = question;
+  document.getElementById('questionSection').style.display = 'none';
+  document.getElementById('spreadArea').style.display = 'block';
+  
+  // 注释掉缓存清空 - 保持缓存以便重复点击时直接显示
+  // clearInterpretationCache();
+  
+  // 设置系统提示词
+  setSystemPrompt();
+  
+  // 随机选择10张牌并设置到牌阵中
+  setupSpread();
+}
+
+// 设置牌阵
+function setupSpread() {
+  console.log('设置牌阵，塔罗牌总数:', tarotCards.length);
+  
+  // 随机选择10张不重复的牌
+  const shuffledCards = [...tarotCards].sort(() => Math.random() - 0.5);
+  selectedCards = shuffledCards.slice(0, 10);
+  
+  // 为每张牌设置翻转状态（50%概率逆位）
+  selectedCards = selectedCards.map(card => ({
+    ...card,
+    reversed: Math.random() < 0.5
+  }));
+  
+  console.log('选择的牌:', selectedCards.map(card => `${card.name}(${card.reversed ? '逆位' : '正位'})`));
+  
+  // 设置卡牌点击事件
+  const cardElements = document.querySelectorAll('.tarot-card');
+  cardElements.forEach((cardEl, index) => {
+    cardEl.onclick = () => interpretCard(index);
+  });
+}
+
+// 这个函数已被上面重新定义的interpretCard函数替换，删除此重复定义
+
+// 请求AI解释
+function requestInterpretation(card, position, cacheKey) {
+  if (!wsConnected || isGenerating) {
+    console.log('WebSocket未连接或正在生成中');
+    return;
+  }
+  
+  isGenerating = true;
+  console.log('开始请求AI解释');
+  console.log('当前缓存键:', cacheKey);
+  
+  // 最后检查一次缓存
+  const directCacheKey = `${interpretationCacheKey}_${cacheKey}`;
+  const lastCheckCache = localStorage.getItem(directCacheKey);
+  
+  if (lastCheckCache && lastCheckCache.length > 10) {
+    console.log('最后检查发现缓存存在，使用缓存，长度:', lastCheckCache.length);
+    isGenerating = false;
+    
+    // 显示缓存加载状态
+    document.getElementById('aiInterpretation').innerHTML = `
+      <div style="color: var(--gold-color); text-align: center; padding: 20px;">
+        <i class="fas fa-history"></i> 发现缓存，立即加载...
+      </div>
+    `;
+    
+    // 显示缓存的结果
+    setTimeout(() => {
+      displayInterpretation(lastCheckCache, false);
+    }, 300);
+    return;
+  }
+  
+  console.log('确认无缓存，请求AI生成解读');
+  
+  // 重置解析内容构建器
+  interpretationBuilder = '';
+  
+  // 在生成解读时禁用所有卡牌点击
+  toggleCardClickability(false);
+  
+  // 构造用户输入，包含所有牌面信息
+  const userInput = `请为我解读这张牌：
+
+牌面信息：
+- 牌名：${card.name}
+- 位置：${positions[position]}
+- 方位：${card.reversed ? '逆位' : '正位'}
+- 正位含义：${card.meanings.upright.join(', ')}
+- 逆位含义：${card.meanings.reversed.join(', ')}
+- 元素：${card.element || '无特定元素'}
+- 星座：${card.sign && card.sign.length > 0 ? card.sign.join(', ') : '无特定星座'}
+
+用户问题：${currentQuestion}
+
+请给出专业的塔罗牌解读。`;
+
+  // 记录当前请求的缓存键，用于在收到响应时保存
+  currentRequestCacheKey = cacheKey;
+
+  // 发送用户输入
+  if (!safeSend({
+    type: 'set_user_input',
+    data: { text: userInput }
+  })) {
+    isGenerating = false;
+    toggleCardClickability(true);
+    displayInterpretation('连接失败，请刷新页面重试。', false);
+    return;
+  }
+
+  // 短暂延迟后触发发送消息
+  setTimeout(() => {
+    if (!safeSend({
+      type: 'trigger_send_message'
+    })) {
+      isGenerating = false;
+      toggleCardClickability(true);
+      displayInterpretation('发送消息失败，请重试。', false);
+    }
+  }, 100);
+}
+
+// 定义全局变量用于跟踪当前请求的缓存键
+let currentRequestCacheKey = null;
+
+// 切换卡牌点击能力
+function toggleCardClickability(enabled) {
+  const cards = document.querySelectorAll('.tarot-card:not(.flipped)');
+  cards.forEach(card => {
+    if (enabled) {
+      card.style.cursor = 'pointer';
+      card.style.opacity = '1';
+    } else {
+      card.style.cursor = 'not-allowed';
+      card.style.opacity = '0.5';
+    }
+  });
+}
+
+// 这个函数已在上方定义，删除此重复定义
+
+// 重置占卜
+function resetReading() {
+  console.log('重新占卜');
+  
+  // 首先触发清空消息
+  if (wsConnected) {
+    safeSend({
+      type: 'trigger_clear_message'
+    });
+    console.log('已发送清空消息指令');
+  }
+  
+  // 重置UI状态
+  document.getElementById('questionSection').style.display = 'block';
+  document.getElementById('spreadArea').style.display = 'none';
+  document.getElementById('interpretation').style.display = 'none';
+  document.getElementById('questionInput').value = '';
+  
+  // 重置所有卡牌
+  document.querySelectorAll('.tarot-card').forEach((card, index) => {
+    card.classList.remove('flipped', 'reversed');
+    const position = index + 1;
+    const meaning = card.dataset.meaning;
+    card.innerHTML = `
+      <div class="card-number">${position}</div>
+      <div class="card-meaning">${meaning}</div>
+    `;
+    card.onclick = null;
+  });
+  
+  // 重置变量
+  currentQuestion = '';
+  selectedCards = [];
+  systemPromptSet = false; // 重置系统提示词标志
+  isGenerating = false;
+  interpretationBuilder = '';
+  
+  // 清空解析结果缓存
+  clearInterpretationCache();
+  
+  console.log('重置完成');
+}
+
+// 事件监听
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('页面加载完成');
+  
+  // 检查缓存状态
+  checkCacheStatus();
+  
+  // 初始化WebSocket连接
+  initWS();
+  
+  document.getElementById('startBtn').addEventListener('click', startReading);
+  document.getElementById('resetBtn').addEventListener('click', resetReading);
+  
+  // 回车键开始占卜
+  document.getElementById('questionInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      startReading();
+    }
+  });
+});
+
+// 页面卸载前关闭WebSocket连接
+window.addEventListener('beforeunload', () => {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.close();
+  }
+});
+</script>
+
+</body>
+</html>
