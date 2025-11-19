@@ -9,699 +9,371 @@
 <script src="marked.min.js"></script>
 <script src="lang/zh.js"></script>
 <script src="lang/en.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
+/* --- 1. 核心变量 --- */
 :root {
-  --bg-primary: #0f1419;
-  --bg-secondary: #1a2332;
-  --bg-card: rgba(26, 35, 50, 0.85);
-  --border-color: rgba(78, 115, 145, 0.4);
-  --border-active: #4e7391;
-  --accent-color: #3d5a80;
-  --accent-light: #5a7fa3;
-  --text-primary: #e8eaed;
-  --text-secondary: #9aa0a6;
-  --gold-color: #fbbf24;
-  --card-back: #2d3748;
-  --gradient-primary: linear-gradient(135deg, #0f1419 0%, #1a2332 50%, #2d3748 100%);
-  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.25);
-  --shadow-hover: 0 8px 35px rgba(59, 90, 128, 0.15);
+  --bg-deep: #0b0f19;
+  --bg-gradient-1: rgba(76, 201, 240, 0.12);
+  --bg-gradient-2: rgba(157, 78, 221, 0.15);
+  
+  --glass-bg: rgba(20, 22, 35, 0.8); /* 稍微加深背景增加文字对比度 */
+  --glass-border: rgba(255, 255, 255, 0.08);
+  
+  --gold-primary: #ffd700;
+  --gold-dim: #c5a059;
+  --accent-purple: #9d4edd;
+  
+  --text-primary: #f0f0f5;
+  --text-secondary: #b0b0c0;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* --- 2. 全局背景与排版 --- */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  background: var(--gradient-primary);
+  font-family: 'Lato', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-deep);
+  background-image: 
+    radial-gradient(circle at 20% 30%, var(--bg-gradient-1) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, var(--bg-gradient-2) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%);
+  background-attachment: fixed;
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
-  line-height: 1.6;
+}
+
+/* 噪点纹理 */
+body::before {
+  content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: -1;
 }
 
 .container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px;
+  max-width: 1200px; margin: 0 auto; padding: 20px; position: relative; z-index: 1;
 }
 
-.header {
-  text-align: center;
-  margin-bottom: 30px; /* 减小底部间距，从50px改为30px */
-  padding: 30px 0;
+/* 语言切换 */
+.language-toggle {
+  position: fixed; top: 20px; right: 20px; z-index: 2000;
+  display: flex; gap: 5px;
+  background: rgba(15, 15, 25, 0.8);
+  border: 1px solid var(--glass-border);
+  border-radius: 30px; padding: 6px;
+  backdrop-filter: blur(10px);
 }
+.lang-btn {
+  padding: 6px 16px; border: none; border-radius: 20px;
+  background: transparent; color: var(--text-secondary);
+  font-family: 'Cinzel', serif; font-size: 0.85rem; cursor: pointer; transition: all 0.3s;
+}
+.lang-btn.active { background: var(--gold-dim); color: #000; }
 
+/* 头部 */
+.header { text-align: center; padding: 40px 0; }
 .header h1 {
-  font-size: 3rem;
-  font-weight: 300;
-  color: var(--gold-color);
-  text-shadow: 0 2px 15px rgba(251, 191, 36, 0.3);
-  margin-bottom: 15px;
-  letter-spacing: 2px;
+  font-family: 'Cinzel', serif; font-size: 3rem;
+  background: linear-gradient(to bottom, #fff, #ffd700);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.3); margin-bottom: 10px;
+}
+.header p { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; color: var(--text-secondary); font-style: italic; }
+
+/* 面板通用 */
+.question-section, .interpretation {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px; padding: 40px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+  margin-bottom: 40px; text-align: center;
 }
 
-.header p {
-  font-size: 1.2rem;
-  color: var(--text-secondary);
-  font-weight: 300;
-}
-
-/* 问题输入区域 */
-.question-section {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 40px;
-  margin-bottom: 50px;
-  text-align: center;
-  backdrop-filter: blur(20px);
-  box-shadow: var(--shadow-soft);
-}
-
-.question-section h2 {
-  color: var(--accent-light);
-  margin-bottom: 25px;
-  font-size: 1.6rem;
-  font-weight: 400;
-}
-
+.question-section h2 { font-family: 'Cinzel', serif; color: var(--gold-dim); margin-bottom: 20px; }
 .question-input {
-  width: 100%;
-  max-width: 700px;
-  padding: 18px 25px;
-  font-size: 1.1rem;
-  background: rgba(15, 20, 25, 0.6);
-  border: 2px solid var(--border-color);
-  border-radius: 15px;
-  color: var(--text-primary);
-  margin-bottom: 25px;
-  transition: all 0.3s ease;
+  width: 100%; max-width: 600px; padding: 18px 25px; font-size: 1.1rem;
+  background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 50px; color: #fff; margin-bottom: 30px; outline: none; transition: border 0.3s;
 }
+.question-input:focus { border-color: var(--gold-primary); box-shadow: 0 0 15px rgba(255, 215, 0, 0.1); }
 
-.question-input:focus {
-  outline: none;
-  border-color: var(--accent-light);
-  box-shadow: 0 0 25px rgba(90, 127, 163, 0.2);
-  background: rgba(15, 20, 25, 0.8);
+/* 按钮 */
+.start-btn, .reset-btn {
+  background: linear-gradient(135deg, #4b2c7a, #a14e6b);
+  border: none; padding: 14px 40px; border-radius: 50px;
+  color: white; font-family: 'Cinzel', serif; font-size: 1.1rem;
+  cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
+.start-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(161, 78, 107, 0.5); }
 
-.question-input::placeholder {
-  color: var(--text-secondary);
+.reset-btn { 
+  background: transparent; 
+  border: 2px solid var(--gold-dim); 
+  color: var(--gold-dim); 
+  margin-top: 50px; position: relative; z-index: 100;
 }
+.reset-btn:hover { background: rgba(197, 160, 89, 0.1); }
 
-.start-btn {
-  background: linear-gradient(135deg, var(--accent-color), var(--accent-light));
-  border: none;
-  padding: 15px 35px;
-  border-radius: 30px;
-  color: white;
-  font-size: 1.1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: var(--shadow-soft);
-}
-
-.start-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-hover);
-  background: linear-gradient(135deg, var(--accent-light), #6b92b8);
-}
-
-/* 牌阵区域 */
+/* --- 3. 牌阵区域 --- */
 .spread-area {
-  display: none;
-  position: relative;
-  margin: 20px 0; /* 减小上下边距，从50px改为20px */
-  min-height: 1000px;
+  display: none; 
+  position: relative; width: 100%;
+  min-height: 100vh; overflow: visible; 
+  flex-direction: column; align-items: center;
+  padding-bottom: 100px;
+}
+
+.spread-area[style*="display: block"], .spread-area[style*="display:block"] {
+  display: flex !important;
 }
 
 .spread-title {
-  text-align: center;
-  color: var(--gold-color);
-  margin-bottom: 0;  /* 减小下方间距，从50px改为20px */
-  font-size: 1.8rem;
-  font-weight: 300;
-  text-shadow: 0 2px 10px rgba(251, 191, 36, 0.2);
-}
-
-.celtic-cross {
-  position: relative;
+  font-family: 'Cinzel', serif; 
+  color: var(--gold-primary);
+  font-size: 2rem; 
+  margin-bottom: 40px; 
+  z-index: 10;
   width: 100%;
-  height: 900px;
-  margin: 0 auto;
-  max-width: 1200px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transform: translateX(-100px); /* 调整整体左移量，使十字部分更居中 */
+  text-align: center;
+}
+.celtic-cross {
+  position: relative; width: 1000px; height: 800px;
+  flex-shrink: 0; transform-origin: top center; 
+  transition: transform 0.3s ease; margin-bottom: 20px; 
 }
 
+/* --- 4. 卡牌样式系统 --- */
 .tarot-card {
-  position: absolute;
-  width: 110px;
-  height: 165px;
-  background: linear-gradient(145deg, var(--card-back), #374151);
-  border: 2px solid var(--border-color);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-  text-align: center;
-  color: var(--gold-color);
-  box-shadow: var(--shadow-soft);
-  user-select: none;
-  overflow: hidden;
+  position: absolute; width: 120px; height: 190px;
+  background: 
+    repeating-linear-gradient(45deg, rgba(255,215,0,0.05) 0px, rgba(255,215,0,0.05) 2px, transparent 2px, transparent 8px),
+    linear-gradient(135deg, #2d2d44 0%, #1a1a2e 100%);
+  border: 2px solid #4a4a6a; border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer; user-select: none; z-index: 1;
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+  transform: translate(-50%, -50%); /* 默认居中 */
 }
 
+.tarot-card::after {
+  content: ''; position: absolute;
+  top: 5px; left: 5px; right: 5px; bottom: 5px;
+  border: 1px solid rgba(255, 215, 0, 0.3); border-radius: 8px; pointer-events: none;
+}
+
+/* --- 修复：通用 Hover 动画 (包含已翻开的牌) --- */
 .tarot-card:hover {
-  transform: translateY(-4px) scale(1.02);
-  border-color: var(--gold-color);
-  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.1);
-  z-index: 15;
+  /* 重点：不改变translate定位，只增加轻微的 scale 和 阴影 */
+  /* 这里必须重新声明 translate(-50%, -50%) 否则会覆盖掉基础样式导致错位 */
+  transform: translate(-50%, -50%) scale(1.03);
+  border-color: var(--gold-primary);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.2), 0 0 10px rgba(157, 78, 221, 0.3);
+  z-index: 100; /* Hover时层级最高 */
 }
 
+/* 未翻开时的额外位移 (显得轻盈) */
+.tarot-card:not(.flipped):hover {
+  transform: translate(-50%, -50%) translateY(-3px) scale(1.03);
+}
+
+/* 翻开状态 */
 .tarot-card.flipped {
-  background: white;
-  color: #333;
-  border-color: var(--accent-color);
-  box-shadow: 0 8px 35px rgba(59, 90, 128, 0.2);
+  background: #000; border-color: var(--gold-primary);
+  /* 翻开后不需要 translateY 动画，保持稳定，只响应上面的通用 scale */
 }
 
-.tarot-card img {
-  width: calc(100% - 4px);
-  height: calc(100% - 4px);
-  object-fit: cover;
-  border-radius: 10px;
+.tarot-card img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+
+/* --- 修复：横向牌 (Card 2) 逻辑 --- */
+/* 当 Card 2 翻开时，容器仍然是 190x120 (横向) */
+/* 图片本身是 120x190 (竖向)，我们需要旋转它并强制它适配 */
+
+/* 1. 容器尺寸 */
+.card-2 { width: 190px; height: 120px; }
+
+/* 2. 图片适配 */
+.card-2.flipped img { 
+  /* 强制图片尺寸为卡牌的原始竖向尺寸 */
+  width: 120px; 
+  height: 190px; 
+  max-width: none; /* 移除 max-width 限制 */
+  
+  /* 旋转 90 度 */
+  transform: rotate(90deg);
+  
+  /* 确保旋转后的图片居中 */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* 因为旋转基点在中心，我们需要通过 margin 将其拉回正确位置 */
+  margin-top: -95px; /* 高度的一半 */
+  margin-left: -60px; /* 宽度的一半 */
 }
 
-/* 特殊处理横向牌面的图片 */
-.card-2.flipped {
-  overflow: hidden; /* 确保内容不超出卡牌边界 */
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* 3. 逆位处理 */
+.card-2.flipped.reversed img { 
+  transform: rotate(270deg); 
 }
 
-.card-2.flipped img {
-  max-width: none; /* 取消最大宽度限制 */
-  width: 165%; /* 图片宽度超过容器宽度 */
-  height: auto; /* 让高度自动调整 */
-  border-radius: 10px;
-  transform-origin: center; /* 确保旋转围绕中心点 */
-  transform: rotate(90deg); /* 横向放置 */
-  position: relative; /* 允许使用其他定位属性 */
+/* 普通牌的逆位 */
+.tarot-card.reversed img { transform: rotate(180deg); }
+
+.card-number { font-family: 'Cinzel', serif; font-weight: bold; color: var(--gold-primary); margin-bottom: 5px; }
+.card-meaning { font-size: 0.7rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+
+/* --- 5. 绝对定位坐标 (修复 Card 1 消失) --- */
+/* 核心逻辑：Card 1 和 Card 2 都在中心，Card 2 横着盖在上面 */
+/* Card 1 (竖): 120x190. Top: 400. Y轴范围: 305~495 */
+/* Card 2 (横): 190x120. Top: 400. Y轴范围: 340~460 */
+/* 结果：Card 1 的上下各 35px 会露出来，形成十字。 */
+
+.card-1 { left: 350px; top: 400px; z-index: 10; } /* 底层 */
+.card-2 { left: 350px; top: 400px; z-index: 11; } /* 上层 */
+
+.card-3 { left: 350px; top: 180px; }
+.card-4 { left: 350px; top: 620px; }
+.card-5 { left: 130px; top: 400px; }
+.card-6 { left: 570px; top: 400px; }
+.card-7 { left: 800px; top: 730px; }
+.card-8 { left: 800px; top: 510px; }
+.card-9 { left: 800px; top: 290px; }
+.card-10 { left: 800px; top: 70px; }
+
+/* 装饰连线 */
+.celtic-cross::before {
+  content: ''; position: absolute;
+  left: 350px; top: 400px; width: 440px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,215,0,0.15), transparent);
+  transform: translate(-50%, -50%); pointer-events: none;
+}
+.celtic-cross::after {
+  content: ''; position: absolute;
+  left: 350px; top: 400px; width: 1px; height: 440px;
+  background: linear-gradient(180deg, transparent, rgba(255,215,0,0.15), transparent);
+  transform: translate(-50%, -50%); pointer-events: none;
 }
 
-.card-2.flipped.reversed img {
-  transform: rotate(270deg); /* 逆位时旋转方向 */
+/* --- 6. 响应式与缩放 --- */
+@media (max-width: 1100px) { .celtic-cross { transform: scale(0.9); } }
+@media (max-width: 850px) { .celtic-cross { transform: scale(0.7); margin-bottom: -150px; } }
+@media (max-width: 600px) { 
+  .celtic-cross { transform: scale(0.45); width: 1000px; margin-left: 0; margin-bottom: -350px; }
+  .header h1 { font-size: 2rem; }
+  .question-section, .interpretation { padding: 25px 15px; }
+  .card-info { flex-direction: column; }
 }
+@media (max-width: 400px) { .celtic-cross { transform: scale(0.38); margin-bottom: -450px; } }
 
-.tarot-card.reversed img {
-  transform: rotate(180deg);
-}
+.controls-center { text-align: center; width: 100%; margin-top: 20px; padding: 20px; }
 
-.card-number {
-  font-weight: 600;
-  margin-bottom: 8px;
-  font-size: 1.1rem;
-}
-
-.card-meaning {
-  font-size: 0.8rem;
-  text-align: center;
-  line-height: 1.3;
-  opacity: 0.9;
-  padding: 0 5px;
-}
-
-/* 凯尔特十字布局 - 修复重叠问题 */
-.card-1 { 
-  top: 50%; 
-  left: 45%; /* 将中心卡牌向左移动，从50%改为45% */
-  transform: translate(-50%, -50%); 
-  z-index: 3;
-} /* 现状 - 中心，提高层级让其可见 */
-
-.card-2 { 
-  top: 50%; 
-  left: 45%; /* 与1号牌同一水平位置 */
-  width: 165px; /* 交换宽高以横向放置 */
-  height: 110px;
-  transform: translate(-50%, -50%); /* 不需要旋转，通过交换宽高实现横向 */
-  z-index: 4; /* 提高层级让其可见 */
-} /* 挑战 - 横向放置在1号牌上方 */
-
-.card-3 { 
-  top: calc(50% - 200px); 
-  left: 45%; /* 与1号牌保持一致的左偏移 */
-  transform: translate(-50%, -50%); 
-  z-index: 1;
-} /* 远因 - 上方 */
-
-.card-4 { 
-  top: calc(50% + 200px); 
-  left: 45%; /* 与1号牌保持一致的左偏移 */
-  transform: translate(-50%, -50%); 
-  z-index: 1;
-} /* 近因 - 下方 */
-
-.card-5 { 
-  top: 50%; 
-  left: calc(45% - 200px); /* 调整为新的中心点左侧 */
-  transform: translate(-50%, -50%); 
-  z-index: 1;
-} /* 可能性 - 左方 */
-
-.card-6 { 
-  top: 50%; 
-  left: calc(45% + 200px); /* 调整为新的中心点右侧 */
-  transform: translate(-50%, -50%); 
-  z-index: 1;
-} /* 近期 - 右方，确保与9号牌有足够距离 */
-
-.card-7 { 
-  top: calc(50% + 300px); 
-  left: calc(45% + 320px); /* 调整右侧卡牌水平位置，避免与十字结构重叠 */
-  transform: translate(-50%, -50%); 
-  z-index: 1;
-} /* 你的方法 - 右下角柱 */
-
-.card-8 { 
-  top: calc(50% + 150px); 
-  left: calc(45% + 320px); /* 调整右侧卡牌水平位置 */
-  transform: translate(-50%, -50%); 
-  z-index: 1;
-} /* 外在影响 - 右中下柱 */
-
-.card-9 { 
-  top: calc(50% + 0px); 
-  left: calc(45% + 320px); /* 调整右侧卡牌水平位置，与6号牌保持距离 */
-  transform: translate(-50%, -50%); 
-  z-index: 1;
-} /* 希望恐惧 - 右中柱，与6号牌错开 */
-
-.card-10 { 
-  top: calc(50% - 150px); 
-  left: calc(45% + 320px); /* 调整右侧卡牌水平位置 */
-  transform: translate(-50%, -50%); 
-  z-index: 1;
-} /* 最终结果 - 右上柱 */
-
-/* 解释区域 */
+/* --- 7. 解释区域与 Markdown 优化 --- */
 .interpretation {
-  display: none;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 35px;
-  margin-top: 40px;
-  backdrop-filter: blur(20px);
-  box-shadow: var(--shadow-soft);
+  display: none; margin-top: 20px; text-align: left;
 }
-
-/* Markdown 样式 */
-.ai-interpretation {
-  line-height: 1.8;
-  font-size: 1.05rem;
-}
-
-.ai-interpretation h1, 
-.ai-interpretation h2, 
-.ai-interpretation h3 {
-  margin-top: 1em;
-  margin-bottom: 0.5em;
-  color: var(--gold-color);
-}
-
-.ai-interpretation p {
-  margin-bottom: 1em;
-}
-
-.ai-interpretation ul, 
-.ai-interpretation ol {
-  margin-left: 1.5em;
-  margin-bottom: 1em;
-}
-
-.ai-interpretation blockquote {
-  border-left: 4px solid var(--accent-light);
-  padding-left: 1em;
-  margin-left: 0;
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
-.ai-interpretation code {
-  background: rgba(15, 20, 25, 0.4);
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-family: monospace;
-}
-
-.ai-interpretation strong, 
-.ai-interpretation b {
-  color: var(--gold-color);
-}
-
-.ai-interpretation a {
-  color: var(--accent-light);
-  text-decoration: underline;
-}
-
-.ai-interpretation img {
-  max-width: 100%;
-  border-radius: 5px;
-  margin: 1em 0;
-}
-
 .interpretation h3 {
-  color: var(--gold-color);
-  margin-bottom: 25px;
-  font-size: 1.5rem;
-  font-weight: 400;
-  text-shadow: 0 2px 10px rgba(251, 191, 36, 0.2);
+  font-family: 'Cinzel', serif; color: var(--gold-primary);
+  font-size: 1.8rem; border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 15px; margin-bottom: 30px; text-align: center;
 }
 
 .card-info {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 25px;
-  gap: 25px;
+  display: flex; gap: 30px; margin-bottom: 30px;
+  background: rgba(0,0,0,0.2); padding: 25px; border-radius: 15px;
+  border: 1px solid var(--glass-border);
 }
 
 .card-preview {
-  width: 140px;
-  height: 210px;
-  border-radius: 12px;
-  border: 2px solid var(--border-color);
-  overflow: hidden;
-  flex-shrink: 0;
-  box-shadow: var(--shadow-soft);
+  width: 140px; height: 210px; flex-shrink: 0;
+  border: 2px solid var(--gold-dim); border-radius: 10px; overflow: hidden;
+  background: rgba(0, 0, 0, 0.3);
 }
+.card-preview img { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; }
 
-.card-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+.card-details h4 { font-family: 'Cinzel', serif; color: #fff; font-size: 1.8rem; margin-bottom: 10px; }
+.card-position { color: var(--accent-purple); font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.3rem; margin-bottom: 8px; }
+.card-orientation { display: inline-block; background: rgba(255,215,0,0.1); color: var(--gold-primary); padding: 4px 12px; border-radius: 12px; font-size: 0.95rem; border: 1px solid rgba(255,215,0,0.3); }
 
-.card-details h4 {
-  color: var(--accent-light);
-  font-size: 1.4rem;
-  margin-bottom: 8px;
-  font-weight: 500;
-}
-
-.card-position {
-  color: var(--gold-color);
-  font-weight: 600;
-  margin-bottom: 8px;
-  font-size: 1.1rem;
-}
-
-.card-orientation {
-  color: var(--text-secondary);
-  font-size: 1rem;
-  background: rgba(59, 90, 128, 0.1);
-  padding: 4px 12px;
-  border-radius: 15px;
-  display: inline-block;
-}
-
+/* --- 修复：Markdown 渲染样式 --- */
 .ai-interpretation {
-  background: rgba(15, 20, 25, 0.4);
-  padding: 25px;
-  border-radius: 15px;
-  border-left: 4px solid var(--accent-light);
+  font-size: 1.1rem;
   line-height: 1.8;
-  font-size: 1.05rem;
+  color: #e0e0e0;
 }
 
-.loading {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--accent-light);
-  justify-content: center;
-  padding: 20px;
+/* 标题优化 */
+.ai-interpretation h1, 
+.ai-interpretation h2, 
+.ai-interpretation h3 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold-primary);
+  margin-top: 1.5em;
+  margin-bottom: 0.8em;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+  padding-bottom: 5px;
+  display: inline-block; /* 让下划线只包裹文字 */
 }
 
-.spinner {
-  width: 24px;
-  height: 24px;
-  border: 3px solid transparent;
-  border-top: 3px solid var(--accent-light);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+.ai-interpretation h1 { font-size: 1.6rem; }
+.ai-interpretation h2 { font-size: 1.4rem; }
+
+/* 段落优化 */
+.ai-interpretation p {
+  margin-bottom: 1.2em;
+  text-align: justify; /* 两端对齐更显质感 */
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+/* 列表优化 */
+.ai-interpretation ul, 
+.ai-interpretation ol {
+  margin-bottom: 1.5em;
+  padding-left: 1.5em;
 }
 
-/* 重新开始按钮 */
-.reset-btn {
-  background: transparent;
-  border: 2px solid var(--accent-color);
-  color: var(--accent-color);
-  padding: 12px 25px;
-  border-radius: 25px;
-  cursor: pointer;
-  margin-top: 30px;
-  transition: all 0.3s ease;
-  font-size: 1rem;
-  font-weight: 500;
+.ai-interpretation li {
+  margin-bottom: 0.5em;
+  position: relative;
 }
 
-.reset-btn:hover {
-  background: var(--accent-color);
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-hover);
+/* 强调文字 */
+.ai-interpretation strong, 
+.ai-interpretation b {
+  color: var(--gold-primary);
+  font-weight: 600;
+  text-shadow: 0 0 5px rgba(255, 215, 0, 0.2);
 }
 
-.controls-center {
-  text-align: center;
-  margin-top: 50px;
+/* 引用块优化 */
+.ai-interpretation blockquote {
+  border-left: 4px solid var(--accent-purple);
+  background: linear-gradient(90deg, rgba(157, 78, 221, 0.1) 0%, transparent 100%);
+  padding: 15px 20px;
+  margin: 20px 0;
+  border-radius: 0 8px 8px 0;
+  color: #d0d0ff;
+  font-style: italic;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem;
 }
 
-/* 响应式设计 */
-@media (max-width: 1200px) {
-  .celtic-cross {
-    transform: translateX(-100px) scale(0.9);
-    height: 810px;
-  }
-}
-@media (max-width: 1024px) {
-  .celtic-cross {
-    transform: translateX(-90px) scale(0.8);
-    height: 720px;
-  }
-  
-  .tarot-card {
-    width: 100px;
-    height: 150px;
-    font-size: 0.85rem;
-  }
-  
-  .card-2 {
-    width: 150px;
-    height: 100px;
-  }
+/* 代码块/关键术语 */
+.ai-interpretation code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  color: var(--accent-purple);
 }
 
-@media (max-width: 768px) {
-  .container {
-    padding: 15px;
-  }
-  
-  .header h1 {
-    font-size: 2.2rem;
-  }
-  
-  .celtic-cross {
-    transform: translateX(-70px) scale(0.65);
-    height: 585px;
-  }
-  
-  .card-info {
-    flex-direction: column;
-    text-align: center;
-    align-items: center;
-  }
-  
-  .tarot-card {
-    width: 90px;
-    height: 135px;
-    font-size: 0.8rem;
-  }
-  
-  .card-2 {
-    width: 135px;
-    height: 90px;
-  }
-  
-  .card-meaning {
-    font-size: 0.7rem;
-  }
-  
-  .question-section, .interpretation {
-    padding: 25px;
-  }
-  
-  .card-preview {
-    width: 120px;
-    height: 180px;
-  }
-}
-
-@media (max-width: 480px) {
-  .header h1 {
-    font-size: 1.8rem;
-  }
-  
-  .celtic-cross {
-    transform: translateX(-50px) scale(0.55);
-    height: 495px;
-  }
-  
-  .tarot-card {
-    width: 80px;
-    height: 120px;
-    font-size: 0.75rem;
-  }
-  
-  .card-2 {
-    width: 120px;
-    height: 80px;
-  }
-  
-  .card-preview {
-    width: 100px;
-    height: 150px;
-  }
-  
-  .spread-area {
-    min-height: 800px;
-  }
-}
-
-/* 添加一些细节动画 */
-.tarot-card {
-  animation: cardAppear 0.6s ease-out forwards;
-  opacity: 0;
-}
-
-.card-1 { animation-delay: 0.1s; }
-.card-2 { animation-delay: 0.2s; }
-.card-3 { animation-delay: 0.3s; }
-.card-4 { animation-delay: 0.4s; }
-.card-5 { animation-delay: 0.5s; }
-.card-6 { animation-delay: 0.6s; }
-.card-7 { animation-delay: 0.7s; }
-.card-8 { animation-delay: 0.8s; }
-.card-9 { animation-delay: 0.9s; }
-.card-10 { animation-delay: 1.0s; }
-
-@keyframes cardAppear {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* 添加位置指示线 */
-.celtic-cross::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 45%; /* 调整水平位置指示线与新的卡牌位置对齐 */
-  width: 400px;
-  height: 1px;
-  background: rgba(78, 115, 145, 0.15);
-  transform: translate(-50%, -50%);
-  z-index: 0;
-}
-
-.celtic-cross::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 45%; /* 调整垂直位置指示线与新的卡牌位置对齐 */
-  width: 1px;
-  height: 400px;
-  background: rgba(78, 115, 145, 0.15);
-  transform: translate(-50%, -50%);
-  z-index: 0;
-}
-
-/* 语言切换按钮样式 */
-.language-toggle {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
-  display: flex;
-  gap: 5px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 25px;
-  padding: 8px;
-  backdrop-filter: blur(20px);
-  box-shadow: var(--shadow-soft);
-}
-
-.lang-btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 20px;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 40px;
-}
-
-.lang-btn:hover {
-  color: var(--text-primary);
-  background: rgba(59, 90, 128, 0.1);
-}
-
-.lang-btn.active {
-  background: var(--accent-color);
-  color: white;
-  box-shadow: 0 2px 8px rgba(59, 90, 128, 0.3);
-}
-
-/* 响应式语言切换按钮 */
-@media (max-width: 768px) {
-  .language-toggle {
-    top: 15px;
-    right: 15px;
-    padding: 6px;
-  }
-  
-  .lang-btn {
-    padding: 6px 12px;
-    font-size: 0.8rem;
-    min-width: 35px;
-  }
-}
+/* 加载动画 */
+.loading { display: flex; justify-content: center; align-items: center; gap: 10px; color: var(--gold-primary); padding: 20px; font-family: 'Cinzel', serif; }
+.spinner { width: 24px; height: 24px; border: 2px solid transparent; border-top-color: var(--gold-primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -1373,8 +1045,18 @@ function startReading() {
   document.getElementById('questionSection').style.display = 'none';
   document.getElementById('spreadArea').style.display = 'block';
   
-  // 注释掉缓存清空 - 保持缓存以便重复点击时直接显示
-  // clearInterpretationCache();
+  // 添加滚动到牌阵区域的逻辑
+  setTimeout(() => {
+    const spreadArea = document.getElementById('spreadArea');
+    const windowHeight = window.innerHeight;
+    const spreadAreaHeight = spreadArea.offsetHeight;
+    const targetScrollTop = spreadArea.offsetTop - (windowHeight / 2) + (spreadAreaHeight / 2);
+    
+    window.scrollTo({
+      top: targetScrollTop,
+      behavior: 'smooth'
+    });
+  }, 100); // 100ms延迟确保DOM更新完成后再滚动
   
   // 设置系统提示词
   setSystemPrompt();
