@@ -1373,8 +1373,18 @@ function startReading() {
   document.getElementById('questionSection').style.display = 'none';
   document.getElementById('spreadArea').style.display = 'block';
   
-  // 注释掉缓存清空 - 保持缓存以便重复点击时直接显示
-  // clearInterpretationCache();
+  // 添加滚动到牌阵区域的逻辑
+  setTimeout(() => {
+    const spreadArea = document.getElementById('spreadArea');
+    const windowHeight = window.innerHeight;
+    const spreadAreaHeight = spreadArea.offsetHeight;
+    const targetScrollTop = spreadArea.offsetTop - (windowHeight / 2) + (spreadAreaHeight / 2);
+    
+    window.scrollTo({
+      top: targetScrollTop,
+      behavior: 'smooth'
+    });
+  }, 100); // 100ms延迟确保DOM更新完成后再滚动
   
   // 设置系统提示词
   setSystemPrompt();
