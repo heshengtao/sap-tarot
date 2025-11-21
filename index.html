@@ -488,7 +488,6 @@ let tarotCards = [];
 let currentQuestion = '';
 let selectedCards = [];
 let isGenerating = false;
-let systemPromptSet = false;
 let wsConnected = false;
 
 // 国际化相关变量
@@ -497,6 +496,9 @@ let langData = {}; // 当前语言数据
 
 // 使用LocalStorage实现持久化缓存
 const interpretationCacheKey = 'tarotInterpretationCache';
+
+// [新增] 定义系统提示词常量
+const TAROT_SYSTEM_PROMPT = "你是一位专业的塔罗牌占卜师，具有深厚的塔罗知识和直觉洞察力。请为用户提供准确、有深度且有启发性的塔罗牌解读。\n\n请遵循以下要求：\n1. 结合牌的含义、位置含义和正逆位来解读\n2. 联系用户的具体问题给出针对性建议\n3. 语言要神秘而富有诗意，但又要实用\n4. 解读长度在150-300字之间\n5. 先简述牌的基础含义，再结合位置和问题深入分析，最后给出建议\n\n用户会发送给你牌面信息，包括牌名、牌在凯尔特十字牌阵的位置、正逆位、含义、元素等信息，以及用户的问题。请根据这些信息给出专业的塔罗牌解读。";
 
 // 简化的缓存管理 - 直接使用localStorage，不需要复杂的索引
 function getInterpretationFromCache(cacheKey) {
@@ -703,11 +705,6 @@ function displayInterpretation(interpretation, shouldCache = true) {
   toggleCardClickability(true);
 }
 
-// 这段重复的WebSocket消息处理将被删除，因为已经在initWS函数中定义了相同功能
-
-
-// 这个函数已在上方定义，删除此重复定义
-
 // 清空缓存
 function clearInterpretationCache() {
   try {
@@ -900,6 +897,16 @@ function initWS() {
   ws.onopen = () => {
     console.log('WebSocket连接已建立');
     wsConnected = true;
+    
+    // [关键修改] 连接建立后，立即发送系统提示词
+    console.log('发送系统提示词配置...');
+    ws.send(JSON.stringify({
+      type: 'set_system_prompt',
+      data: {
+        text: TAROT_SYSTEM_PROMPT
+      }
+    }));
+    
     loadTarotCards();
   };
   
@@ -987,33 +994,6 @@ async function loadTarotCards() {
   }
 }
 
-// 设置系统提示词（只设置一次）
-function setSystemPrompt() {
-  if (systemPromptSet || !wsConnected) {
-    console.log('系统提示词已设置或WebSocket未连接');
-    return;
-  }
-  
-  const systemPrompt = `你是一位专业的塔罗牌占卜师，具有深厚的塔罗知识和直觉洞察力。请为用户提供准确、有深度且有启发性的塔罗牌解读。
-
-请遵循以下要求：
-1. 结合牌的含义、位置含义和正逆位来解读
-2. 联系用户的具体问题给出针对性建议
-3. 语言要神秘而富有诗意，但又要实用
-4. 解读长度在150-300字之间
-5. 先简述牌的基础含义，再结合位置和问题深入分析，最后给出建议
-
-用户会发送给你牌面信息，包括牌名、牌在凯尔特十字牌阵的位置、正逆位、含义、元素等信息，以及用户的问题。请根据这些信息给出专业的塔罗牌解读。`;
-
-  if (safeSend({
-    type: 'set_system_prompt',
-    data: { text: systemPrompt }
-  })) {
-    systemPromptSet = true;
-    console.log('系统提示词设置成功');
-  }
-}
-
 // 开始占卜
 function startReading() {
 
@@ -1058,9 +1038,6 @@ function startReading() {
     });
   }, 100); // 100ms延迟确保DOM更新完成后再滚动
   
-  // 设置系统提示词
-  setSystemPrompt();
-  
   // 随机选择10张牌并设置到牌阵中
   setupSpread();
 }
@@ -1087,8 +1064,6 @@ function setupSpread() {
     cardEl.onclick = () => interpretCard(index);
   });
 }
-
-// 这个函数已被上面重新定义的interpretCard函数替换，删除此重复定义
 
 // 请求AI解释
 function requestInterpretation(card, position, cacheKey) {
@@ -1207,8 +1182,6 @@ function toggleCardClickability(enabled) {
   });
 }
 
-// 这个函数已在上方定义，删除此重复定义
-
 // 重置占卜
 function resetReading() {
   console.log('重新占卜');
@@ -1242,7 +1215,6 @@ function resetReading() {
   // 重置变量
   currentQuestion = '';
   selectedCards = [];
-  systemPromptSet = false; // 重置系统提示词标志
   isGenerating = false;
   interpretationBuilder = '';
   
